@@ -378,30 +378,34 @@ les pics que l'on voit sur les courbes)
 
 ##10
 
-#Mn=[]
-#Y = Simulation(observation_indexes,depth,Delta,N,sigma2,a)
-#Y.conditionnement()
-#'''
-#On va aller jusqu'à 250
-#'''
-#for j in range(1,251):
-#    long_moy=0
-#    for i in range(j):
-#        long_moy += longueur(Y.simul(),Delta)
-#    long_moy = long_moy/j
-#    Mn.append(long_moy)
-#
-#plt.plot(Mn,'o')
-#plt.title('Suite Mn de la longueur moyenne du câble en fonction du nombre de simulations')
-#plt.xlabel('Nombre de Simulations')
-#plt.ylabel('Longueur moyenne du câble pour\nun nombre de simulation donné')
-#plt.show()
-#
-###11
-#plt.hist(Mn,50)
-#plt.title('Histogramme des valeurs prises par la moyenne de la longeur de câble')
-#plt.xlabel('Longueurs moyennes')
-#plt.ylabel("Nombre d'occurences")
+Mn=[]
+L=[] #Va stocker toutes les longueurs calculées, donc c'est une grosse liste...
+Y = Simulation(observation_indexes,depth,Delta,N,sigma2,a)
+Y.conditionnement()
+'''
+On va aller jusqu'à 250
+'''
+for j in range(1,251):
+    long_moy=0
+    for i in range(j):
+        l = longueur(Y.simul(),Delta)
+        long_moy += l
+        L.append(l)
+    long_moy = long_moy/j
+    Mn.append(long_moy)
+
+plt.plot(Mn,'o')
+plt.title('Suite Mn de la longueur moyenne du câble en fonction du nombre de simulations')
+plt.xlabel('Nombre de Simulations')
+plt.ylabel('Longueur moyenne du câble pour\nun nombre de simulation donné')
+plt.show()
+
+##11
+plt.hist(L,100)
+plt.title('Histogramme des valeurs prises par la moyenne de la longeur de câble')
+plt.xlabel('Longueurs moyennes')
+plt.ylabel("Nombre d'occurences")
+plt.show()
 
 '''
 Commentaire à améliorer : on a visiblement un convergence vers 522-523 m environ

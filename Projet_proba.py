@@ -272,17 +272,24 @@ class Simulation:
     les profondeurs de référence
     '''
     
-    def __init__(self,observation_indexes,depth,Delta,N):
+    def __init__(self,observation_indexes,depth,Delta,N,sigma2,a):
         self.observation_indexes = observation_indexes
         self.depth = depth
         self.delta = Delta
         self.N = N
+        self.sigma2=sigma2
         self.discretization_indexes = np.arange(N)
-        self.discretization = discretization_indexes * Delta
-        self.unknown_indexes = list(set(discretization_indexes)-set(observation_indexes))
+        self.discretization = self.discretization_indexes * Delta
+        self.unknown_indexes = list(set(self.discretization_indexes)-set(self.observation_indexes))
         self.esp_cond = 0
         self.cov_cond = 0
         self.Y = Y
+        self.a = a
+        distances=np.zeros((N,N))
+        for i in range(N):
+            for j in range(N):
+                distances[i,j] = Delta*np.abs(i-j)
+        self.distances=distances
     
     def conditionnement(self):
         '''
@@ -293,16 +300,14 @@ class Simulation:
         N = self.N
         observation_indexes=self.observation_indexes
         depth = self.depth 
-        Delat = self.delta
-        discretization_indexes = self.discretization_indexes
-        discretization = self.discretization
+        Delta = self.delta
         unknown_indexes = self.unknown_indexes
         
         distances=np.zeros((N,N))
         for i in range(N):
             for j in range(N):
                 distances[i,j] = Delta*np.abs(i-j)
-        cov_Z=cov(distances,a,sigma2)
+        cov_Z=cov(self.distances,self.a,self.sigma2)
         l=len(observation_indexes)
         cov_observation=np.zeros((l,l))
         for i in range(l):
@@ -334,7 +339,7 @@ class Simulation:
         On fait la simulation conditionnelle une fois
         '''
         R = np.linalg.cholesky(self.cov_cond)
-        Y = esp_cond + R.dot(np.random.randn(len(self.unknown_indexes)))
+        Y = self.esp_cond + R.dot(np.random.randn(len(self.unknown_indexes)))
         Y = Y.tolist()
         for i in range(len(self.observation_indexes)):
             Y.insert(self.observation_indexes[i],self.depth[i])
@@ -342,7 +347,7 @@ class Simulation:
         return Y
     
    
-Y = Simulation(observation_indexes,depth,Delta,N)
+Y = Simulation(observation_indexes,depth,Delta,N,sigma2,a)
 Y.conditionnement()
 
 long_moy=0
@@ -373,30 +378,30 @@ les pics que l'on voit sur les courbes)
 
 ##10
 
-Mn=[]
-Y = Simulation(observation_indexes,depth,Delta,N)
-Y.conditionnement()
-'''
-On va aller jusqu'à 250
-'''
-for j in range(1,251):
-    long_moy=0
-    for i in range(j):
-        long_moy += longueur(Y.simul(),Delta)
-    long_moy = long_moy/j
-    Mn.append(long_moy)
-
-plt.plot(Mn,'o')
-plt.title('Suite Mn de la longueur moyenne du câble en fonction du nombre de simulations')
-plt.xlabel('Nombre de Simulations')
-plt.ylabel('Longueur moyenne du câble pour\nun nombre de simulation donné')
-plt.show()
-
-##11
-plt.hist(Mn,50)
-plt.title('Histogramme des valeurs prises par la moyenne de la longeur de câble')
-plt.xlabel('Longueurs moyennes')
-plt.ylabel("Nombre d'occurences")
+#Mn=[]
+#Y = Simulation(observation_indexes,depth,Delta,N,sigma2,a)
+#Y.conditionnement()
+#'''
+#On va aller jusqu'à 250
+#'''
+#for j in range(1,251):
+#    long_moy=0
+#    for i in range(j):
+#        long_moy += longueur(Y.simul(),Delta)
+#    long_moy = long_moy/j
+#    Mn.append(long_moy)
+#
+#plt.plot(Mn,'o')
+#plt.title('Suite Mn de la longueur moyenne du câble en fonction du nombre de simulations')
+#plt.xlabel('Nombre de Simulations')
+#plt.ylabel('Longueur moyenne du câble pour\nun nombre de simulation donné')
+#plt.show()
+#
+###11
+#plt.hist(Mn,50)
+#plt.title('Histogramme des valeurs prises par la moyenne de la longeur de câble')
+#plt.xlabel('Longueurs moyennes')
+#plt.ylabel("Nombre d'occurences")
 
 '''
 Commentaire à améliorer : on a visiblement un convergence vers 522-523 m environ
@@ -404,3 +409,72 @@ Commentaire à améliorer : on a visiblement un convergence vers 522-523 m envir
 
 # Pour faire une simulation, il suffit de faire Y.simul()
 # Z=Y.simul() permet de stocker la simulation dans la variable Z
+
+
+'''
+Annexe
+'''
+
+'''
+On va simuler un cas concret : mettre un câble reliant New York à Brest.
+Les données sont prises sur Google Earth.
+Ici, mu=-5000 (profondeurs abissales) et sigma2=10 000.
+A et B sont en km
+On prend a = 600 pour faire la simulation.
+'''
+
+A=0
+B=6000
+N=1001
+Delta=(B-A)/(N-1)
+mu = -5000
+a = 600
+sigma2 = 10000
+observation_indexes = [0 ,20 ,50 ,70 ,85 ,100 ,111 ,205 ,293 ,310 ,391 ,428 ,474 ,542 ,563 ,668 ,833 ,911 ,917 ,930 ,950 ,980 ,1000]
+depth = np.array([40 ,-250 ,-308 ,-304 ,-305 ,-300 ,-3240 ,-4850 ,-5010, -5210 ,-3980 ,-4930 ,-4850 ,-3000 ,-3400 ,-1750 ,-4830 ,-3700 ,-304 ,-306 ,-307 ,-280 ,105])
+
+plt.plot(np.array(observation_indexes)*Delta, depth)
+plt.xlabel('Longueur')
+plt.ylabel('Profondeurs connues')
+plt.show()
+
+Y = Simulation(observation_indexes,depth,Delta,N,sigma2,a)
+Y.conditionnement()
+esp_condBis = Y.esp_cond.tolist()
+
+for i in range(len(observation_indexes)):
+    esp_condBis.insert(observation_indexes[i],depth[i])
+
+plt.plot(Y.discretization,esp_condBis,'b')
+plt.plot(np.array(observation_indexes)*Delta,depth,'gs')
+plt.xlabel('Longueur')
+plt.title("Profondeur moyenne estimée de l'Atlantique")
+plt.ylabel('Espérance conditionnelle en bleu\nProfondeur connues en vert')
+plt.show()
+
+diag=[Y.cov_cond[i,i] for i in range(len(Y.unknown_indexes))]
+plt.plot(np.array(Y.unknown_indexes)*Delta,diag)
+plt.xlabel('Longueur')
+plt.ylabel("Variance du fond océanique de l'Atlantique")
+plt.title("Avec d'autres observations")
+plt.show()
+
+Simulation=Y.simul()
+
+plt.plot(Y.discretization,Simulation)
+plt.title("Simulation conditionnelle des profondeurs\nde l'Atlantique")
+plt.xlabel('Longueur')
+plt.show()
+
+long_moy=0
+
+for i in range(100):
+    long_moy += longueur(Y.simul(),Delta)
+
+long_moy = long_moy/100
+
+long_cond = longueur(Y.esp_cond,Delta)
+
+print("La longueur moyenne estimée est {} km là où l'espérance conditionnelle nous donne {} km\
+ (au kilomètre près) pour 100 simulations."\
+      .format(int(long_moy),int(long_cond)))

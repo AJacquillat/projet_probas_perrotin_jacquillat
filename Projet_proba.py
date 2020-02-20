@@ -383,9 +383,9 @@ L=[] #Va stocker toutes les longueurs calculées, donc c'est une grosse liste...
 Y = Simulation(observation_indexes,depth,Delta,N,sigma2,a)
 Y.conditionnement()
 '''
-On va aller jusqu'à 250
+On va aller jusqu'à 500, cela peut prendre quelques secondes...
 '''
-for j in range(1,251):
+for j in range(1,501):
     long_moy=0
     for i in range(j):
         l = longueur(Y.simul(),Delta)
